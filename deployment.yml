@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app-deployment
+  labels:
+    app: web_server
+    owner: NickYoung
+    description: web_server
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      project: myweb
+  template:
+    metadata:
+      labels:
+        project: myweb
+        owner: NickYoung
+        description: web_server
+    spec:
+      containers:
+        - name: myweb-httpd
+          image: httpd:latest
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "128m"
+            # more resourses for startup
+            limits:
+              memory: "150Mi"
+              cpu: "300m"
+          # livenessprobe for fault tolerance
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+              httpHeaders:
+              - name: Custom-Header
+                value: Awesome
+            initialDelaySeconds: 3
+            periodSeconds: 2
+          # startup probe for - 10 secs for start, 5 repeats
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: liveness-port
+            failureThreshold: 10
+            periodSeconds: 5
+          ports:
+            - containerPort: 80
+            - containerPort: 443
